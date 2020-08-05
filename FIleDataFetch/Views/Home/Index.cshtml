@@ -1,0 +1,144 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+@using (Html.BeginForm(null, null, new { @id = string.Empty }, FormMethod.Post,
+    new { @id = "HomeForm" }))
+{
+    <label class="label_text">Upload file</label>
+    <div class="field_t file_exe">
+        <input type="file" value="" id="txtUploadFile" class="file_Btn" placeholder="Choose File">
+    </div>
+    <span>&nbsp;</span>
+    <div id="DivData">
+
+        <table border="1" cellpadding="4" cellspacing="4">
+            <tr>
+                <th>Type</th>
+                <th>Symbol</th>
+            </tr>
+            <tr>
+                <td rowspan="2" valign="top">
+                    <table>
+                        <tr>
+
+                            <td><label id="LblType"></label></td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <table border="1" cellpadding="3" cellspacing="3">
+                        <tr>
+                            <th>seq</th>
+                            <th>data</th>
+                            <th>error</th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label id="lblseq"></label>
+                            </td>
+                            <td>
+                                <label id="lbldata"></label>
+                            </td>
+                            <td>
+                                <label id="lblerror"></label>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <span>&nbsp;</span>
+        <div>
+            <label>Uploaded QR Code Is for </label>
+            &nbsp;
+            <label id="QrData"></label>
+        </div>
+
+    </div>
+}
+<script src="~/Scripts/jquery-3.3.1.js"></script>
+<script>
+    var applicationUrl;
+    $(document).ready(function (event) {
+        $("#DivData").hide();
+        applicationUrl = $("#applicationPath").val();
+        $('input[type="file"]').change(function (e) {
+         
+            debugger;
+            var fileName = e.target.files[0].name;
+            var file_size = e.target.files[0].size;
+            var fileData = new FormData();
+            fileData.append(e.target.files[0].name, e.target.files[0]);
+            var fileExtension = ['jpeg', 'jpg', 'png', 'gif'];
+            var ResultData = '';
+            if ($.inArray(fileName.split('.').pop().toLowerCase(), fileExtension) != -1) {
+
+                if (file_size <= 1048576) {
+                    $.ajax({
+                        url: applicationUrl + 'Home/UploadFiles',
+                        type: "POST",
+                        contentType: false, // Not to set any content header
+                        processData: false, // Not to process data
+                        data: fileData,
+                        success: function (result) {
+                            //  ResultData=result 
+                           
+                            //alert(result);
+                            // var obj = jQuery.parseJSON(result);
+                            $.each(JSON.parse(JSON.parse(result)), function (index, jsonObject) {
+                                $.each(jsonObject, function (key, val) {
+                                    debugger;
+                                    if (key.trim() == "type") {
+                                        $("#LblType").text(val);
+                                    }
+                                    if (key.trim() == "symbol") {
+                                        debugger;
+                                        $.each(JSON.parse(JSON.parse(result))[0].symbol, function (index1, jsonObject1) {
+                                            debugger;
+                                            $.each(jsonObject1, function (key1, val1) {
+                                                switch (key1.trim()) {
+                                                    case "seq":
+                                                        $("#lblseq").text(val1);
+                                                        break;
+                                                    case "data":
+                                                        $("#lbldata").text(val1);
+                                                         $("#QrData").text(val1);
+                                                        
+                                                        break;
+                                                    case "error":
+                                                        $("#lblerror").text(val1);
+                                                        break;
+                                                    default:
+                                                }
+
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+
+                            $("#DivData").show();
+                        },
+                        error: function (err) {
+                            $("#DivData").hide();
+                            alert(err.statusText);
+                        }
+                    });
+                    $(this).attr("value", "");
+                }
+                else {
+                    $("#DivData").hide();
+                    alert("File size is greater than 1MB");
+                   $("#txtUploadFile").replaceWith($("#txtUploadFile").val('').clone(true));
+                }
+
+            }
+            else {
+                $("#DivData").hide();
+                alert("Only formats are allowed : " + fileExtension.join(', '));
+                $("#txtUploadFile").replaceWith($("#txtUploadFile").val('').clone(true));
+            }
+
+        });
+    });
+</script>
